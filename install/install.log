@@ -1,0 +1,89 @@
+2026-03-17T02:14:52.845Z [DEBUG] MDM settings load completed in 0ms
+2026-03-17T02:14:52.847Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /home/codespace/.claude/settings.json
+2026-03-17T02:14:52.848Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /home/codespace/.claude/settings.json
+2026-03-17T02:14:52.849Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /workspaces/claude-code/install/.claude/settings.json
+2026-03-17T02:14:52.849Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /workspaces/claude-code/install/.claude/settings.local.json
+2026-03-17T02:14:52.849Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /etc/claude-code/managed-settings.json
+2026-03-17T02:14:52.849Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /etc/claude-code/managed-settings.json
+2026-03-17T02:14:52.849Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /home/codespace/.claude/settings.json
+2026-03-17T02:14:52.850Z [DEBUG] CA certs: Config fallback - globalEnv keys: , settingsEnv keys: none
+2026-03-17T02:14:52.851Z [ERROR] Failed to save config with lock: Error: ENOENT: no such file or directory, lstat '/home/codespace/.claude.json'
+2026-03-17T02:14:52.852Z [DEBUG] Writing to temp file: /home/codespace/.claude.json.tmp.5150.1773713692852
+2026-03-17T02:14:52.852Z [DEBUG] Setting permissions for new file: 600
+2026-03-17T02:14:52.854Z [DEBUG] Temp file written successfully, size: 50 bytes
+2026-03-17T02:14:52.854Z [DEBUG] Renaming /home/codespace/.claude.json.tmp.5150.1773713692852 to /home/codespace/.claude.json
+2026-03-17T02:14:52.854Z [DEBUG] File /home/codespace/.claude.json written atomically
+2026-03-17T02:14:52.854Z [DEBUG] [init] configureGlobalMTLS starting
+2026-03-17T02:14:52.855Z [DEBUG] [init] configureGlobalMTLS complete
+2026-03-17T02:14:52.855Z [DEBUG] [init] configureGlobalAgents starting
+2026-03-17T02:14:52.855Z [DEBUG] CA certs: useSystemCA=false, extraCertsPath=undefined
+2026-03-17T02:14:52.855Z [DEBUG] [init] configureGlobalAgents complete
+2026-03-17T02:14:52.857Z [DEBUG] Error log sink initialized
+2026-03-17T02:14:52.859Z [DEBUG] Writing to temp file: /home/codespace/.claude.json.tmp.5150.1773713692859
+2026-03-17T02:14:52.859Z [DEBUG] Preserving file permissions: 100600
+2026-03-17T02:14:52.861Z [DEBUG] Temp file written successfully, size: 86 bytes
+2026-03-17T02:14:52.861Z [DEBUG] Applied original permissions to temp file
+2026-03-17T02:14:52.861Z [DEBUG] Renaming /home/codespace/.claude.json.tmp.5150.1773713692859 to /home/codespace/.claude.json
+2026-03-17T02:14:52.861Z [DEBUG] File /home/codespace/.claude.json written atomically
+2026-03-17T02:14:52.864Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /home/codespace/.claude/settings.json
+2026-03-17T02:14:52.865Z [DEBUG] Writing to temp file: /home/codespace/.claude.json.tmp.5150.1773713692865
+2026-03-17T02:14:52.865Z [DEBUG] Preserving file permissions: 100600
+2026-03-17T02:14:52.867Z [DEBUG] Temp file written successfully, size: 125 bytes
+2026-03-17T02:14:52.867Z [DEBUG] Applied original permissions to temp file
+2026-03-17T02:14:52.867Z [DEBUG] Renaming /home/codespace/.claude.json.tmp.5150.1773713692865 to /home/codespace/.claude.json
+2026-03-17T02:14:52.867Z [DEBUG] File /home/codespace/.claude.json written atomically
+2026-03-17T02:14:52.867Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /home/codespace/.claude/settings.json
+2026-03-17T02:14:52.889Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /etc/claude-code/managed-settings.json
+2026-03-17T02:14:52.890Z [DEBUG] Loading skills from: managed=/etc/claude-code/.claude/skills, user=/home/codespace/.claude/skills, project=[]
+2026-03-17T02:14:52.891Z [DEBUG] Error log sink initialized
+2026-03-17T02:14:52.898Z [DEBUG] Loaded 0 unique skills (0 unconditional, 0 conditional, managed: 0, user: 0, project: 0, additional: 0, legacy commands: 0)
+2026-03-17T02:14:52.898Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /etc/claude-code/managed-settings.json
+2026-03-17T02:14:52.898Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /etc/claude-code/managed-settings.json
+2026-03-17T02:14:52.899Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-03-17T02:14:52.899Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /etc/claude-code/managed-settings.json
+2026-03-17T02:14:52.899Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-03-17T02:14:52.899Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-03-17T02:14:52.899Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-03-17T02:14:52.899Z [DEBUG] Total plugin skills loaded: 0
+2026-03-17T02:14:52.899Z [DEBUG] Total plugin commands loaded: 0
+2026-03-17T02:14:52.899Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills, 7 bundled skills, 0 builtin plugin skills
+2026-03-17T02:14:52.906Z [DEBUG] [render] initLayout starting
+2026-03-17T02:14:52.939Z [DEBUG] [render] initLayout complete
+2026-03-17T02:14:52.949Z [DEBUG] Install: Starting installation process (force=false, target=undefined)
+2026-03-17T02:14:52.949Z [DEBUG] Install: Calling installLatest(channelOrVersion=latest, forceReinstall=false)
+2026-03-17T02:14:52.951Z [DEBUG] [render] first ink render: 368ms since process start
+2026-03-17T02:14:52.953Z [DEBUG] Writing to temp file: /home/codespace/.claude.json.tmp.5150.1773713692953
+2026-03-17T02:14:52.953Z [DEBUG] Preserving file permissions: 100600
+2026-03-17T02:14:52.961Z [DEBUG] Temp file written successfully, size: 205 bytes
+2026-03-17T02:14:52.961Z [DEBUG] Applied original permissions to temp file
+2026-03-17T02:14:52.961Z [DEBUG] Renaming /home/codespace/.claude.json.tmp.5150.1773713692953 to /home/codespace/.claude.json
+2026-03-17T02:14:52.961Z [DEBUG] File /home/codespace/.claude.json written atomically
+2026-03-17T02:14:52.965Z [DEBUG] Git remote URL: https://github.com/lanzhiwang/claude-code
+2026-03-17T02:14:52.965Z [DEBUG] Parsed repository: github.com/lanzhiwang/claude-code from URL: https://github.com/lanzhiwang/claude-code
+2026-03-17T02:14:52.975Z [DEBUG] [Claude in Chrome] Extension not found in any browser
+2026-03-17T02:14:52.982Z [DEBUG] Writing to temp file: /home/codespace/.claude.json.tmp.5150.1773713692982
+2026-03-17T02:14:52.982Z [DEBUG] Preserving file permissions: 100600
+2026-03-17T02:14:52.986Z [DEBUG] Temp file written successfully, size: 246 bytes
+2026-03-17T02:14:52.986Z [DEBUG] Applied original permissions to temp file
+2026-03-17T02:14:52.986Z [DEBUG] Renaming /home/codespace/.claude.json.tmp.5150.1773713692982 to /home/codespace/.claude.json
+2026-03-17T02:14:52.986Z [DEBUG] File /home/codespace/.claude.json written atomically
+2026-03-17T02:14:53.590Z [DEBUG] Checking for native installer update to version 2.1.77
+2026-03-17T02:14:53.598Z [DEBUG] Downloading native installer version 2.1.77
+2026-03-17T02:15:10.274Z [DEBUG] Atomically installed binary to /home/codespace/.local/share/claude/versions/2.1.77
+2026-03-17T02:15:10.350Z [DEBUG] Could not remove empty directory at /home/codespace/.local/bin/claude: Error: ENOENT: no such file or directory, statx '/home/codespace/.local/bin/claude'
+2026-03-17T02:15:10.351Z [DEBUG] Created directory /home/codespace/.local/bin for symlink
+2026-03-17T02:15:12.958Z [DEBUG] Atomically updated symlink /home/codespace/.local/bin/claude -> /home/codespace/.local/share/claude/versions/2.1.77
+2026-03-17T02:15:12.959Z [DEBUG] Successfully updated to version 2.1.77
+2026-03-17T02:15:12.961Z [DEBUG] Writing to temp file: /home/codespace/.claude.json.tmp.5150.1773713712961
+2026-03-17T02:15:12.961Z [DEBUG] Preserving file permissions: 100600
+2026-03-17T02:15:12.963Z [DEBUG] Temp file written successfully, size: 340 bytes
+2026-03-17T02:15:12.963Z [DEBUG] Applied original permissions to temp file
+2026-03-17T02:15:12.963Z [DEBUG] Renaming /home/codespace/.claude.json.tmp.5150.1773713712961 to /home/codespace/.claude.json
+2026-03-17T02:15:12.963Z [DEBUG] File /home/codespace/.claude.json written atomically
+2026-03-17T02:15:12.964Z [DEBUG] Native installer: Set installMethod to "native" and disabled legacy auto-updater for protection
+2026-03-17T02:15:12.964Z [DEBUG] Install: installLatest returned version=2.1.77, wasUpdated=true, lockFailed=false
+2026-03-17T02:15:13.873Z [DEBUG] Install: Setup launcher completed with 0 messages
+2026-03-17T02:15:13.873Z [DEBUG] Install: Cleaning up npm installations after successful install
+2026-03-17T02:15:17.394Z [DEBUG] Removed global npm installation of @anthropic-ai/claude-code
+2026-03-17T02:15:17.394Z [DEBUG] Cleaned up 1 npm installation(s)
+2026-03-17T02:15:17.399Z [DEBUG] Install: Shell PATH already configured
