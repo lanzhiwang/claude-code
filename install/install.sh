@@ -236,7 +236,7 @@ chmod +x "$binary_path"
 
 # Run claude install to set up launcher and shell integration
 echo "Setting up Claude Code..."
-"$binary_path" install ${TARGET:+"$TARGET"}
+"$binary_path" --verbose --debug --debug-file ./install.log install ${TARGET:+"$TARGET"}
 # /home/codespace/.claude/downloads/claude-2.1.76-linux-x64 install
 
 # ✔ Claude Code successfully installed!
