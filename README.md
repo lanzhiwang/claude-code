@@ -4,6 +4,17 @@
 
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash -x
+
+./claude --verbose --debug --debug-file ./install.log install
+```
+
+## 使用
+
+```bash
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_BASE_URL=http://172.16.10.51:11434
+claude --verbose --debug --debug-file ./debug.log --model qwen3-coder:30b
+
 ```
 
 ## Docs
