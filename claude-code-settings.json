@@ -206,6 +206,13 @@
     "additionalProperties": true,
     "type": "object",
     "properties": {
+        "autoMemoryDirectory": {},
+        "allowedHttpHookUrls": {},
+        "httpHookAllowedEnvVars": {},
+        "modelOverrides": {},
+        "agent": {},
+        "voiceEnabled": {},
+        "feedbackSurveyRate": {},
         "$schema": {
             "type": "string",
             "description": "JSON Schema reference for Claude Code settings  Claude Code 设置的 JSON Schema 参考"
