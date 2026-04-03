@@ -93,7 +93,7 @@ Options:
   --plugin-dir <path>                               Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B) (default: [])
 
   -p, --print                                       Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when Claude is run with the -p mode. Only use this flag in directories you trust.
-                                                    打印响应并退出(适用于管道). 注意：使用 -p 模式运行 Claude 时, 会跳过工作区信任对话框. 仅在您信任的目录中使用此标志.
+                                                    打印响应并退出(适用于管道). 注意: 使用 -p 模式运行 Claude 时, 会跳过工作区信任对话框. 仅在您信任的目录中使用此标志.
 
   --replay-user-messages                            Re-emit user messages from stdin back on stdout for acknowledgment (only works with --input-format=stream-json and --output-format=stream-json)
                                                     将用户消息从标准输入重新发送到标准输出以进行确认.

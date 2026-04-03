@@ -8,25 +8,25 @@ $ tar x -C ./ollama/ -f ollama-linux-amd64.tar.zst
 $ tree -a ./ollama
 ./ollama
 ├── bin
-│   └── ollama
+│   └── ollama
 └── lib
     └── ollama
         ├── cuda_v12
-        │   ├── libcublas.so.12 -> libcublas.so.12.8.4.1
-        │   ├── libcublas.so.12.8.4.1
-        │   ├── libcublasLt.so.12 -> libcublasLt.so.12.8.4.1
-        │   ├── libcublasLt.so.12.8.4.1
-        │   ├── libcudart.so.12 -> libcudart.so.12.8.90
-        │   ├── libcudart.so.12.8.90
-        │   └── libggml-cuda.so
+        │   ├── libcublas.so.12 -> libcublas.so.12.8.4.1
+        │   ├── libcublas.so.12.8.4.1
+        │   ├── libcublasLt.so.12 -> libcublasLt.so.12.8.4.1
+        │   ├── libcublasLt.so.12.8.4.1
+        │   ├── libcudart.so.12 -> libcudart.so.12.8.90
+        │   ├── libcudart.so.12.8.90
+        │   └── libggml-cuda.so
         ├── cuda_v13
-        │   ├── libcublas.so.13 -> libcublas.so.13.1.0.3
-        │   ├── libcublas.so.13.1.0.3
-        │   ├── libcublasLt.so.13 -> libcublasLt.so.13.1.0.3
-        │   ├── libcublasLt.so.13.1.0.3
-        │   ├── libcudart.so.13 -> libcudart.so.13.0.96
-        │   ├── libcudart.so.13.0.96
-        │   └── libggml-cuda.so
+        │   ├── libcublas.so.13 -> libcublas.so.13.1.0.3
+        │   ├── libcublas.so.13.1.0.3
+        │   ├── libcublasLt.so.13 -> libcublasLt.so.13.1.0.3
+        │   ├── libcublasLt.so.13.1.0.3
+        │   ├── libcudart.so.13 -> libcudart.so.13.0.96
+        │   ├── libcudart.so.13.0.96
+        │   └── libggml-cuda.so
         ├── libggml-base.so -> libggml-base.so.0
         ├── libggml-base.so.0 -> libggml-base.so.0.0.0
         ├── libggml-base.so.0.0.0
@@ -38,40 +38,40 @@ $ tree -a ./ollama
         ├── libggml-cpu-sse42.so
         ├── libggml-cpu-x64.so
         ├── mlx_cuda_v13
-        │   ├── libcublas.so -> libcublas.so.13
-        │   ├── libcublas.so.13 -> ./libcublas.so.13.1.0.3
-        │   ├── libcublas.so.13.1.0.3 -> ../cuda_v13/libcublas.so.13.1.0.3
-        │   ├── libcublasLt.so.13 -> libcublasLt.so.13.1.0.3
-        │   ├── libcublasLt.so.13.1.0.3 -> ../cuda_v13/libcublasLt.so.13.1.0.3
-        │   ├── libcudart.so -> libcudart.so.13
-        │   ├── libcudart.so.13 -> libcudart.so.13.0.96
-        │   ├── libcudart.so.13.0.96 -> ../cuda_v13/libcudart.so.13.0.96
-        │   ├── libcudnn.so.9 -> libcudnn.so.9.18.1
-        │   ├── libcudnn.so.9.18.1
-        │   ├── libcudnn_adv.so.9 -> libcudnn_adv.so.9.18.1
-        │   ├── libcudnn_adv.so.9.18.1
-        │   ├── libcudnn_cnn.so.9 -> libcudnn_cnn.so.9.18.1
-        │   ├── libcudnn_cnn.so.9.18.1
-        │   ├── libcudnn_engines_precompiled.so.9 -> libcudnn_engines_precompiled.so.9.18.1
-        │   ├── libcudnn_engines_precompiled.so.9.18.1
-        │   ├── libcudnn_engines_runtime_compiled.so.9 -> libcudnn_engines_runtime_compiled.so.9.18.1
-        │   ├── libcudnn_engines_runtime_compiled.so.9.18.1
-        │   ├── libcudnn_graph.so.9 -> libcudnn_graph.so.9.18.1
-        │   ├── libcudnn_graph.so.9.18.1
-        │   ├── libcudnn_heuristic.so.9 -> libcudnn_heuristic.so.9.18.1
-        │   ├── libcudnn_heuristic.so.9.18.1
-        │   ├── libcudnn_ops.so.9 -> libcudnn_ops.so.9.18.1
-        │   ├── libcudnn_ops.so.9.18.1
-        │   ├── libgfortran.so.5 -> libgfortran.so.5.0.0
-        │   ├── libgfortran.so.5.0.0
-        │   ├── libmlx.so
-        │   ├── libmlxc.so
-        │   ├── libnccl.so.2 -> libnccl.so.2.29.2
-        │   ├── libnccl.so.2.29.2
-        │   ├── libnvrtc.so.13 -> libnvrtc.so.13.0.88
-        │   ├── libnvrtc.so.13.0.88
-        │   ├── libopenblas-r0.3.15.so
-        │   └── libopenblas.so.0 -> libopenblas-r0.3.15.so
+        │   ├── libcublas.so -> libcublas.so.13
+        │   ├── libcublas.so.13 -> ./libcublas.so.13.1.0.3
+        │   ├── libcublas.so.13.1.0.3 -> ../cuda_v13/libcublas.so.13.1.0.3
+        │   ├── libcublasLt.so.13 -> libcublasLt.so.13.1.0.3
+        │   ├── libcublasLt.so.13.1.0.3 -> ../cuda_v13/libcublasLt.so.13.1.0.3
+        │   ├── libcudart.so -> libcudart.so.13
+        │   ├── libcudart.so.13 -> libcudart.so.13.0.96
+        │   ├── libcudart.so.13.0.96 -> ../cuda_v13/libcudart.so.13.0.96
+        │   ├── libcudnn.so.9 -> libcudnn.so.9.18.1
+        │   ├── libcudnn.so.9.18.1
+        │   ├── libcudnn_adv.so.9 -> libcudnn_adv.so.9.18.1
+        │   ├── libcudnn_adv.so.9.18.1
+        │   ├── libcudnn_cnn.so.9 -> libcudnn_cnn.so.9.18.1
+        │   ├── libcudnn_cnn.so.9.18.1
+        │   ├── libcudnn_engines_precompiled.so.9 -> libcudnn_engines_precompiled.so.9.18.1
+        │   ├── libcudnn_engines_precompiled.so.9.18.1
+        │   ├── libcudnn_engines_runtime_compiled.so.9 -> libcudnn_engines_runtime_compiled.so.9.18.1
+        │   ├── libcudnn_engines_runtime_compiled.so.9.18.1
+        │   ├── libcudnn_graph.so.9 -> libcudnn_graph.so.9.18.1
+        │   ├── libcudnn_graph.so.9.18.1
+        │   ├── libcudnn_heuristic.so.9 -> libcudnn_heuristic.so.9.18.1
+        │   ├── libcudnn_heuristic.so.9.18.1
+        │   ├── libcudnn_ops.so.9 -> libcudnn_ops.so.9.18.1
+        │   ├── libcudnn_ops.so.9.18.1
+        │   ├── libgfortran.so.5 -> libgfortran.so.5.0.0
+        │   ├── libgfortran.so.5.0.0
+        │   ├── libmlx.so
+        │   ├── libmlxc.so
+        │   ├── libnccl.so.2 -> libnccl.so.2.29.2
+        │   ├── libnccl.so.2.29.2
+        │   ├── libnvrtc.so.13 -> libnvrtc.so.13.0.88
+        │   ├── libnvrtc.so.13.0.88
+        │   ├── libopenblas-r0.3.15.so
+        │   └── libopenblas.so.0 -> libopenblas-r0.3.15.so
         └── vulkan
             ├── libggml-vulkan.so
             ├── libvulkan.so.1 -> libvulkan.so.1.4.321
@@ -103,19 +103,19 @@ $ tree -a ~/.ollama/
 ├── id_ed25519.pub
 └── models
     ├── blobs
-    │   ├── sha256-1371455c41da08c55c676052f690d19c4c28ab749e94238cb7a582f2e22d7efc
-    │   ├── sha256-7f4030143c1c477224c5434f8272c662a8b042079a0a584f0a27a1684fe2e1fa
-    │   ├── sha256-9d538c9a828efaf67641eab0661d7167873f13b6efcf2f1513b39f6055fc8015
-    │   ├── sha256-ae370d884f108d16e7cc8fd5259ebc5773a0afa6e078b11f4ed7e39a27e0dfc4
-    │   ├── sha256-b0830f4ff6a0220cfd995455206353b0ed23c0aee865218b154b7a75087b4e55
-    │   ├── sha256-cff3f395ef3756ab63e58b0ad1b32bb6f802905cae1472e6a12034e4246fbbdb
-    │   ├── sha256-d18a5cc71b84bc4af394a31116bd3932b42241de70c77d2b76d69a314ec8aa12
-    │   └── sha256-efd971561896866f0e910cce52761ca77b1b138090c7f15fe284676d57d1f689
+    │   ├── sha256-1371455c41da08c55c676052f690d19c4c28ab749e94238cb7a582f2e22d7efc
+    │   ├── sha256-7f4030143c1c477224c5434f8272c662a8b042079a0a584f0a27a1684fe2e1fa
+    │   ├── sha256-9d538c9a828efaf67641eab0661d7167873f13b6efcf2f1513b39f6055fc8015
+    │   ├── sha256-ae370d884f108d16e7cc8fd5259ebc5773a0afa6e078b11f4ed7e39a27e0dfc4
+    │   ├── sha256-b0830f4ff6a0220cfd995455206353b0ed23c0aee865218b154b7a75087b4e55
+    │   ├── sha256-cff3f395ef3756ab63e58b0ad1b32bb6f802905cae1472e6a12034e4246fbbdb
+    │   ├── sha256-d18a5cc71b84bc4af394a31116bd3932b42241de70c77d2b76d69a314ec8aa12
+    │   └── sha256-efd971561896866f0e910cce52761ca77b1b138090c7f15fe284676d57d1f689
     └── manifests
         ├── modelscope.cn
-        │   └── Qwen
-        │       └── Qwen3-32B-GGUF
-        │           └── latest
+        │   └── Qwen
+        │       └── Qwen3-32B-GGUF
+        │           └── latest
         └── registry.ollama.ai
             └── library
                 └── qwen3

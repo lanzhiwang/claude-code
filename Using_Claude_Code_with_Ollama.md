@@ -7,8 +7,8 @@ Claude Code 与 Anthropic API 的兼容性
 
 ![](./images/02.png)
 
-Ollama `v0.14.0` and later are now compatible with the Anthropic [Messages API](https://docs.anthropic.com/en/api/messages), making it possible to use tools like [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with open-source models.
-Ollama v0.14.0 及更高版本现在与 Anthropic Messages API 兼容, 使得将 Claude Code 等工具与开源模型结合使用成为可能.
+Ollama `v0.14.0` and later are now compatible with the Anthropic [Messages API](https://docs.anthropic.com/en/api/messages), making it possible to use tools like [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with open-source models.
+Ollama v0.14.0 及更高版本现在与 Anthropic Messages API 兼容, 使得将 Claude Code 等工具与开源模型结合使用成为可能.
 
 Run Claude Code with local models on your machine, or connect to cloud models through ollama.com.
 在您的计算机上使用本地模型运行 Claude Code, 或通过 ollama.com 连接到云模型.
@@ -72,7 +72,7 @@ It is recommended to run a model with at least 32K tokens context length.
 
 ![](./images/03.png)
 
-For more information, please see [context length documentation](https://docs.ollama.com/context-length) on how to make changes.
+For more information, please see [context length documentation](https://docs.ollama.com/context-length) on how to make changes.
 有关如何进行更改的更多信息, 请参阅[上下文长度文档](https://docs.ollama.com/context-length).
 
 Ollama's cloud models always run at their full context length.
@@ -98,8 +98,8 @@ Claude Code 的编码用例:
 ## Using the Anthropic SDK
 使用 Anthropic SDK
 
-Existing applications using the Anthropic SDK can connect to Ollama by changing the base URL. See the [Anthropic compatibility documentation](https://docs.ollama.com/api/anthropic-compatibility) for details.
-使用 Anthropic SDK 的现有应用程序可以通过更改基本 URL 连接到 Ollama. 有关详细信息, 请参阅 [Anthropic 兼容性文档](https://docs.ollama.com/api/anthropic-compatibility).
+Existing applications using the Anthropic SDK can connect to Ollama by changing the base URL. See the [Anthropic compatibility documentation](https://docs.ollama.com/api/anthropic-compatibility) for details.
+使用 Anthropic SDK 的现有应用程序可以通过更改基本 URL 连接到 Ollama. 有关详细信息, 请参阅 [Anthropic 兼容性文档](https://docs.ollama.com/api/anthropic-compatibility).
 
 ### Python
 
@@ -197,12 +197,12 @@ for block in message.content:
   拓展思维
 
 - Vision (image input)
-  视觉（图像输入）
+  视觉(图像输入)
 
-For a complete list of supported features, see the [Anthropic compatibility documentation](https://docs.ollama.com/api/anthropic-compatibility).
-有关支持功能的完整列表, 请参阅 [Anthropic 兼容性文档](https://docs.ollama.com/api/anthropic-compatibility).
+For a complete list of supported features, see the [Anthropic compatibility documentation](https://docs.ollama.com/api/anthropic-compatibility).
+有关支持功能的完整列表, 请参阅 [Anthropic 兼容性文档](https://docs.ollama.com/api/anthropic-compatibility).
 
 ## Learn more
 
-For more detailed setup instructions and configuration options, see the [Claude Code guide](https://docs.ollama.com/integrations/claude-code).
-有关更详细的设置说明和配置选项, 请参阅 [Claude Code 指南](https://docs.ollama.com/integrations/claude-code).
+For more detailed setup instructions and configuration options, see the [Claude Code guide](https://docs.ollama.com/integrations/claude-code).
+有关更详细的设置说明和配置选项, 请参阅 [Claude Code 指南](https://docs.ollama.com/integrations/claude-code).
