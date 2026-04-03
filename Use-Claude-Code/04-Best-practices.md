@@ -529,7 +529,7 @@ Since context is your fundamental constraint, subagents are one of the most powe
 ```
 Use subagents to investigate how our authentication system handles token
 refresh, and whether we have any existing OAuth utilities I should reuse.
-利用 subagent 来探究我们的认证系统是如何处理令牌刷新的, 并查明是否存在任何可供我复用的现有 OAuth 工具.
+利用 subagent 来探究我们的认证系统是如何处理 token 刷新的, 并查明是否存在任何可供我复用的现有 OAuth 工具.
 ```
 
 The subagent explores the codebase, reads relevant files, and reports back with findings, all without cluttering your main conversation.
