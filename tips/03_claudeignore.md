@@ -1,0 +1,1 @@
+.claudeignore 文件
