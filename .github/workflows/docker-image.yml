@@ -38,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: lanzhiwang/jupyter-12.1.0-cudnn8-devel-ubuntu22.04
+          images: lanzhiwang/claude-code
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -50,8 +50,8 @@ jobs:
         id: push
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
-          context: ./
-          file: ./Dockerfile
+          context: ./.devcontainer_v2.1.112/
+          file: ./.devcontainer_v2.1.112/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
