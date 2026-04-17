@@ -28,6 +28,7 @@ RUN set -x && apt-get update && apt-get install -y --no-install-recommends \
     vim \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 # [ 2/11] RUN
+# set -x &&
 # apt-get update &&
 # apt-get install -y --no-install-recommends less git procps sudo fzf zsh man-db unzip gnupg2 gh iptables ipset iproute2 dnsutils aggregate jq nano vim &&
 # apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -36,6 +37,7 @@ RUN set -x && apt-get update && apt-get install -y --no-install-recommends \
 RUN set -x && mkdir -p /usr/local/share/npm-global && \
     chown -R node:node /usr/local/share
 # [ 3/11] RUN
+# set -x &&
 # mkdir -p /usr/local/share/npm-global &&
 # chown -R node:node /usr/local/share
 
@@ -47,6 +49,7 @@ RUN set -x && SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/co
     && touch /commandhistory/.bash_history \
     && chown -R $USERNAME /commandhistory
 # [ 4/11] RUN
+# set -x &&
 # SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" &&
 # mkdir /commandhistory &&
 # touch /commandhistory/.bash_history &&
@@ -59,6 +62,7 @@ ENV DEVCONTAINER=true
 RUN set -x && mkdir -p /workspace /home/node/.claude && \
     chown -R node:node /workspace /home/node/.claude
 # [ 5/11] RUN
+# set -x &&
 # mkdir -p /workspace /home/node/.claude &&
 # chown -R node:node /workspace /home/node/.claude
 
@@ -71,10 +75,16 @@ RUN set -x && ARCH=$(dpkg --print-architecture) && \
     sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
     rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 # [ 7/11] RUN
+# set -x &&
 # ARCH=$(dpkg --print-architecture) &&
 # wget "https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_${ARCH}.deb" &&
 # sudo dpkg -i "git-delta_0.18.2_${ARCH}.deb" &&
 # rm "git-delta_0.18.2_${ARCH}.deb"
+# dpkg --print-architecture
+# ARCH=amd64
+# wget https://github.com/dandavison/delta/releases/download/0.18.2/git-delta_0.18.2_amd64.deb
+# sudo dpkg -i git-delta_0.18.2_amd64.deb
+# rm git-delta_0.18.2_amd64.deb
 
 # Set up non-root user
 USER node
@@ -100,16 +110,29 @@ RUN set -x && sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases
     -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
     -x
 # [ 8/11] RUN
+# set -x &&
 # sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.0/zsh-in-docker.sh)" -- -p git -p fzf -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" -a "source /usr/share/doc/fzf/examples/completion.zsh" -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" -x
+# wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.0/zsh-in-docker.sh
+# sh -c   -- -p git -p fzf -a source /usr/share/doc/fzf/examples/key-bindings.zsh -a source /usr/share/doc/fzf/examples/completion.zsh -a export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history -x
 
 # Install Claude
 RUN set -x && npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
-
+# [ 9/11] RUN
+# set -x &&
+# npm install -g @anthropic-ai/claude-code@latest
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
+# [10/11] COPY init-firewall.sh /usr/local/bin/
+
 USER root
 RUN set -x && chmod +x /usr/local/bin/init-firewall.sh && \
     echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
     chmod 0440 /etc/sudoers.d/node-firewall
+# [11/11] RUN
+# set -x &&
+# chmod +x /usr/local/bin/init-firewall.sh &&
+# echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall &&
+# chmod 0440 /etc/sudoers.d/node-firewall
+
 USER node
