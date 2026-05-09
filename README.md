@@ -6,6 +6,30 @@
 curl -fsSL https://claude.ai/install.sh | bash -x
 
 ./claude --verbose --debug --debug-file ./install.log install
+
+$ docker run -ti --rm -v "$(pwd)":/app -w /app ubuntu:22.04 bash
+root@9eb0f8e9e658:/app# ls -al
+root@9eb0f8e9e658:/app# ./claude-2.1.137-linux-x64 -v
+2.1.137 (Claude Code)
+root@9eb0f8e9e658:/app#
+root@9eb0f8e9e658:/app# ./claude-2.1.137-linux-x64 --verbose --debug --debug-file ./install.log install
+
+✔ Claude Code successfully installed!
+
+  Version: 2.1.137
+
+  Location: ~/.local/bin/claude
+
+
+  Next: Run claude --help to get started
+
+⚠ Setup notes:
+  ● Native installation exists but ~/.local/bin is not in your PATH. Run:
+
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> your shell config file && source your shell config file
+
+root@9eb0f8e9e658:/app#
+
 ```
 
 ## 使用
