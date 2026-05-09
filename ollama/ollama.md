@@ -3,7 +3,7 @@
 * https://docs.ollama.com/linux#manual-install
 
 ```bash
-
+$ mkdir ollama
 $ tar x -C ./ollama/ -f ollama-linux-amd64.tar.zst
 $ tree -a ./ollama
 ./ollama
