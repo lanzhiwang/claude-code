@@ -1,6 +1,154 @@
 # Claude Code
 
-## help
+## Help General
+
+```bash
+  Help  General   Commands   Custom commands
+
+
+  Claude understands your codebase, makes edits with your permission, and executes commands — right from your terminal.
+  Claude 能够理解你的代码库，经你许可执行修改，并直接在你的终端中运行命令。
+
+  New here? Run /powerup to learn the features most people miss.
+  初来乍到？运行 `/powerup` 即可了解那些常被用户忽略的实用功能。
+
+  Shortcuts
+  ! for shell mode          double tap esc to clear input        ctrl + shift + _ to undo
+  / for commands            shift + tab to auto-accept edits     ctrl + z to suspend
+  @ for file paths          ctrl + o for verbose output          ctrl + v to paste images
+  & for background          ctrl + t to toggle tasks             ctrl + s to stash prompt
+  /btw for side question    backslash (\) + return (⏎) for       ctrl + g to edit in $EDITOR
+                            newline                              /keybindings to customize
+
+  `!` 进入 Shell 模式       双击 `Esc` 清空输入                       `Ctrl + shift + _` 撤销操作
+  `/` 执行命令              `Shift + tab` 自动接受修改                `Ctrl + z` 挂起会话
+  `@` 引用文件路径           `Ctrl + o` 切换详细输出                   `Ctrl + v` 粘贴图片
+  `&` 后台运行              `Ctrl + t` 切换任务                      `Ctrl + s` 暂存提示词
+  `/btw` 提出旁注问题        反斜杠 `\` + 回车 `⏎` 换行（插入新行）      `Ctrl + g` 在 `$EDITOR` 中编辑
+                                                                   `/keybindings` 自定义快捷键
+
+```
+
+## Help Commands
+
+```bash
+  Help  General   Commands   Custom commands
+
+
+  Browse default commands
+
+    /add-dir
+      Add a new working directory
+    /agents
+      Manage agent configurations
+    /background
+      Send this session to the background and free the terminal
+    /branch
+      Create a branch of the current conversation at this point
+    /btw
+      Ask a quick side question without interrupting the main conversation
+    /clear
+      Start a new session with empty context; previous session stays on disk (resumable with /resume)
+    /color
+      Set the prompt bar color for this session
+    /compact
+      Free up context by summarizing the conversation so far
+    /config
+      Open config panel
+    /context
+      Visualize current context usage as a colored grid
+    /copy
+      Copy Claude's last response to clipboard (or /copy N for the Nth-latest)
+    /diff
+      View uncommitted changes and per-turn diffs
+    /doctor
+      Diagnose and verify your Claude Code installation and settings
+    /effort
+      Set effort level for model usage
+    /exit
+      Exit the CLI
+    /export
+      Export the current conversation to a file or clipboard
+    /fast
+      Toggle fast mode (Opus 4.7)
+    /feedback
+      Submit feedback, report a bug, or share your conversation
+    /focus
+      Toggle focus view (show only your prompt, a tool summary, and the final response)
+    /goal
+      Set a goal — keep working until the condition is met
+    /help
+      Show help and available commands
+    /hooks
+      View hook configurations for tool events
+    /ide
+      Manage IDE integrations and show status
+    /init
+      Initialize a new CLAUDE.md file with codebase documentation
+    /insights
+      Generate a report analyzing your Claude Code sessions
+    /keybindings
+      Open or create your keybindings configuration file
+    /login
+      Sign in with your Anthropic account
+    /logout
+      Sign out from your Anthropic account
+    /mcp
+      Manage MCP servers
+    /memory
+      Edit Claude memory files
+    /mobile
+      Show QR code to download the Claude mobile app
+    /model
+      Set the AI model for Claude Code (currently deepseek-v4-pro)
+    /permissions
+      Manage allow & deny tool permission rules
+    /plan
+      Enable plan mode or view the current session plan
+    /plugin
+      Manage Claude Code plugins
+    /powerup
+      Discover Claude Code features through quick interactive lessons
+    /recap
+      Generate a one-line session recap now
+    /release-notes
+      View release notes
+    /reload-plugins
+      Activate pending plugin changes in the current session
+    /rename
+      Rename the current conversation
+    /resume
+      Resume a previous conversation
+    /review
+      Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding st…
+    /rewind
+      Restore the code and/or conversation to a previous point
+    /sandbox
+      ⚠ sandbox disabled (⏎ to configure)
+    /security-review
+      Complete a security review of the pending changes on the current branch
+    /skills
+      List available skills
+    /status
+      Show Claude Code status including version, model, account, API connectivity, and tool statuses
+    /statusline
+      Set up Claude Code's status line UI
+    /stickers
+      Order Claude Code stickers
+    /tasks
+      List and manage background tasks
+    /team-onboarding
+      Help teammates ramp on Claude Code with a guide from your usage
+    /terminal-setup
+      Install Shift+Enter key binding for newlines
+    /theme
+      Change the theme
+    /tui
+      Set the terminal UI renderer (default | fullscreen)
+
+```
+
+## help --help
 
 ```bash
 $ claude --help
