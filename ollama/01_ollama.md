@@ -1,6 +1,7 @@
 # ollama
 
 * https://docs.ollama.com/linux#manual-install
+* https://github.com/ollama/ollama/releases
 
 ```bash
 $ mkdir ollama
@@ -177,7 +178,7 @@ $
 # https_proxy:
 # no_proxy:
 
-CUDA_VISIBLE_DEVICES="0,1,2,3" OLLAMA_DEBUG=1 OLLAMA_HOST=http://0.0.0.0:11434 ollama serve
+CUDA_VISIBLE_DEVICES="0,2" OLLAMA_DEBUG=1 OLLAMA_HOST=http://0.0.0.0:11434 ./ollama serve
 
 # Get version
 $ curl http://localhost:11434/api/version
