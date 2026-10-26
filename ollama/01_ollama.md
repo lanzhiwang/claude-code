@@ -5334,7 +5334,552 @@ docker run -d \
 
 -------------------------------------------------------------------------------------------------------------------
 
+Q: 我使用如下参数启动 ollama 服务
+```bash
+$ CUDA_VISIBLE_DEVICES="0,2" LLAMA_ARG_FIT=on LLAMA_ARG_FIT_TARGET=256 OLLAMA_GPU_OVERHEAD=1073741824 OLLAMA_CONTEXT_LENGTH=262144 OLLAMA_DEBUG=1 OLLAMA_DEBUG_LOG_REQUESTS=0 OLLAMA_FLASH_ATTENTION=1 OLLAMA_HOST=http://0.0.0.0:11434 OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=4 OLLAMA_NO_CLOUD=1 OLLAMA_SCHED_SPREAD=1 ./ollama serve
+```
+ollama 的启动和接收请求的详细日志如文件所示:
+1、请根据日志的信息详细分析 ollama 的启动过程和接收处理请求的过程
+2、根据日志和启动参数, 说明启动参数是否还有优化的地方
+
+这是一份信息量极大且极其典型的双卡 NVIDIA A40 (48GB) + 超长上下文 + 投机采样(Speculative Decoding / MTP) + 视觉多模态(Gemma 4 31B) 的生产级 Ollama 运行日志.
+
+下面从深度架构研究员的视角, 分为全流程硬核拆解与启动参数及系统级优化调优两个部分为您详细剖析.
+
+---
+
+### 一、Ollama 启动与请求全流程详细剖析
+
+整个过程分为两个宏观阶段: 服务初始化与硬件嗅探阶段, 以及模型动态装载(Memory Fit)与超长推理执行阶段.
+
+---
+
+#### 阶段 1: 服务启动与设备自适应探测(18:32:36 ~ 18:32:43)
+
+1. 环境解析与全局策略加载(18:32:36.823):
+
+   * Ollama 打印出所有环境变量快照.
+
+   * `OLLAMA_NO_CLOUD=1` 生效: 日志明确打出 `msg="Ollama cloud disabled: true"`, 并跳过了云端推荐模型刷新与缓存预热(`skipping model show cloud cache hydration`).
+
+   * `version 0.40.2` 启动, 并在通配地址 `[::]:11434` 开放监听.
+
+2. GPU 硬件嗅探与过滤重映射(18:32:36.826 ~ 18:32:43.414):
+
+   * 捕获到用户显式配置了 `CUDA_VISIBLE_DEVICES=0,2`, 系统给出 Warning 提示.
+
+   * Ollama 依次测试探测了动态库 `cuda_v12`、`cuda_v13` 和 `vulkan`, 最终锁定调用匹配度最佳的 `cuda_v12`(驱动为 CUDA 12.4).
+
+   * 物理机上第 0 号(PCIe `0000:67:00.0`)和第 2 号(PCIe `0000:6a:00.0`)两张 NVIDIA A40(单卡 44.3 GiB 可用显存) 被检测到, 并重新映射为内部计算节点: `CUDA0` 与 `CUDA1`. 总可用显存统计为 `86.7 GiB`.
+
+   * 根据大显存策略, Ollama 自动评估默认最大上下文上限为 `262144`(256K).
+
+---
+
+#### 阶段 2: 请求触发冷启动与显存装载(18:33:32 ~ 18:34:20)
+
+在系统静默 50 秒后, 首个推理请求到达, 触发模型的首次动态装载:
+
+1. 显存看门狗检测超时与容错(18:33:35.252, 关键小插曲):
+
+   * 在准备拉起模型前, Ollama 试图通过子进程刷新当前空闲显存(`refreshing free memory`).
+
+   * 此时看门狗触发了警告: `llama-server GPU discovery watchdog timed out ... error="context deadline exceeded"`.
+
+   * 机制: Ollama 做了健壮性容错(Fallback), 未因此崩溃, 而是回退使用开机时的静态探测值 `using old values` 继续流程.
+
+2. 拉起底层 `llama-server` 引擎(18:33:35.703):
+
+   * 观察传给 `llama-server` 的具体命令行参数:
+
+     * `-c 1048576`(1M 上下文总池)配合 `-np 4`, 即 4 个槽位, 每个槽位独立 `262144`(256K) 上下文!
+
+     * 自动挂载了多模态投影器: `--mmproj ...sha256-6357...`(Gemma4 视觉编码器);
+
+     * 自动挂载了 MTP 投机采样草稿模型: `--spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-model ...sha256-9ec4...`(Gemma4 Assistant 470M 草稿头);
+
+     * `--flash-attn on`(开启闪速注意力)、`-b 512 -ub 512`(批处理大小 512).
+
+3. 极具技术内幕的显存动态拟合(Memory Fit 阶段, 18:33:36 ~ 18:33:50):
+
+   * 由于总上下文高达 1048576(4×256K), llama.cpp 的自适应机制开始工作(`fitting params to device memory`).
+
+   * 显存危机计算:
+
+     * 如果模型 60 层全放 GPU, 模型权重需要约 18GB, 而 1M 上下文在 FP16 下的 KV Cache 竟然需要高达 86.7 GB 显存! 再加上计算图缓冲区, 总需求高达 107,022 MiB(两张 A40 物理总显存才 90,806 MiB).
+
+     * 系统得出: `cannot meet free memory targets on all devices, need to use 18567 MiB less in total`(总显存还缺约 18GB).
+
+   * 算法自动裁决层数下沉(Offload):
+
+     * 在优先保住用户指定的 256K 满血上下文前提下, 引擎动态测试并决定: 放弃全 GPU 运行, 将部分模型层下沉到 CPU 内存!
+
+     * 最终裁决: CUDA0 承载 18 层, CUDA1 承载 25 层, 主板 CPU 承载 18 层(共 61 层, 43/61 层入显卡, 6.1GB 权重入 CPU 内存).
+
+4. 模型主体与辅助模块就绪:
+
+   * 主模型 Gemma 4 31B(Q4_K_M) 权重加载完成.
+
+   * 非滑动窗口 KV Cache(Non-SWA)分配了 81.92 GB, 滑动窗口 KV Cache(SWA)分配了 4.8 GB, 几乎将两张 A40 显存吃满.
+
+   * 草稿模型(470M)加载就绪, 投机采样上下文初始化完毕. 整个拉起耗时 44.93 秒.
+
+---
+
+#### 阶段 3: 首字吞吐与流式推理(Prefill & Decoding, 18:34:20 ~ 18:40:29)
+
+客户端发起了一次高难度的超长文本请求:
+
+* 任务规格: 输入提示词长度(Prompt Tokens)高达 43,801 个 Token; 要求输出 1,901 个 Token.
+
+* Prompt 处理阶段(Prefill 耗时: 123.04 秒):
+
+  * 凭借 `OLLAMA_FLASH_ATTENTION=1`, 4.3 万字的 Prompt 处理平均速度达到了 `355.98 tokens/s`(耗时约 2 分钟完成全部编码).
+
+  * 过程中每隔 8192 token 创建了上下文检查点(Context Checkpoint).
+
+* Token 生成阶段(Generation 耗时: 245.38 秒):
+
+  * 解码速度: 平均输出速度为 `7.74 tokens/s`(即单个 Token 耗时约 129.15 ms).
+
+  * 投机采样命中率(MTP Draft):
+
+    * 3 步投机草稿生成了 1902 个 Token, 主模型接受了 1266 个, 草稿接受率高达 `66.56%`(三位置命中率分别为 79.3%, 65.3%, 55.0%), 平均单步生成 3 个 Token, 大幅拉升了生成速度.
+
+* 最终收尾:
+
+  * 生成 1901 个 Token 后命中了终止符(Release).
+
+  * 外部网关(GIN)记录本次长请求耗时 `6m57s` 成功返回 HTTP 200.
+
+  * 请求完成后, 触发我们前文讲过的保活机制: `duration=5m0s`, 模型进入 5 分钟空闲驻留倒计时.
+
+---
+
+### 二、针对当前启动参数与运行状态的"深度调优方案"
+
+观察整份日志, 你的配置已经非常专业(开启了 FlashAttention、Spread、Fit 等), 但依然存在 3 个严重的性能"降速点"和配置冲突.
+
+---
+
+#### 优化点 1: 激活 `OLLAMA_KV_CACHE_TYPE=q8_0`(核心瓶颈! 让模型 100% 跑在 GPU 上)
+
+* 现状与痛点:
+
+  * 日志中你的 `OLLAMA_KV_CACHE_TYPE:` 是空的(默认为 `f16`).
+
+  * 导致 4 并发 × 256K 上下文的 KV Cache 霸占了整整 86.7 GB 显存!
+
+  * 这直接逼迫引擎把 Gemma 4 31B 的 18 层 Transformer Block 强行踢到了极慢的 CPU 内存中(`offloaded 43/61 layers to GPU`).
+
+  * 直接恶果: 生成速度(7.74 tokens/s)被 CPU 内存带宽严重拖累! 如果能全进显卡, A40 配合 MTP 生成速度能飙到 25~35 tokens/s.
+
+* 调优策略:
+
+  在启动参数中加入:
+
+```bash
+OLLAMA_KV_CACHE_TYPE=q8_0
+```
+
+  * 收益: 86.7GB 的 KV Cache 显存会瞬间缩减到 43GB 左右! 两张 A40 一共有 88GB 空间, 省出的 43GB 显存足以把留在 CPU 的 18 层模型(才 6.1GB)100% 塞进 GPU, 推理速度将产生质的飞跃!
+
+---
+
+#### 优化点 2: 消除 `OLLAMA_VULKAN=true` 干扰
+
+* 现状与痛点:
+
+  * 你的环境是纯正的 NVIDIA A40 显卡, 日志证明最终走的是 `cuda_v12`.
+
+  * 但启动参数里配置了 `OLLAMA_VULKAN=true`, 导致启动时还特地去探测了 Vulkan 驱动(`llama-server device discovery took 114ms libDirs=.../vulkan`), 并保留了潜在的后端冲突风险.
+
+* 调优策略:
+
+  直接移除 `OLLAMA_VULKAN=true`, 纯 NVIDIA 环境无需开启 Vulkan.
+
+---
+
+#### 优化点 3: 评估 `OLLAMA_CONTEXT_LENGTH` 与 `OLLAMA_NUM_PARALLEL` 的显存放大乘积
+
+* 现状与痛点:
+
+  * 当前设置: `OLLAMA_CONTEXT_LENGTH=262144`(256K)且 `OLLAMA_NUM_PARALLEL=4`.
+
+  * 底层 `llama-server` 算出来的上下文总量是: $256\text{K} \times 4 = \mathbf{1048576}$(一百万 Token)!
+
+  * 绝大多数业务中, 单次请求根本用不到 256K(哪怕本日志中极度漫长的大请求, Prompt 也就是 4.3 万 Token).
+
+* 调优策略:
+
+  * 如果不需要单次处理 25 万字的超长书籍, 建议将 `OLLAMA_CONTEXT_LENGTH` 缩减为实用的 `65536`(64K) 或 `32768`(32K);
+
+  * 如果确实需要 256K 极长上下文, 但在单次对话场景下, 可将 `OLLAMA_NUM_PARALLEL` 降为 `1` 或 `2`;
+
+  * 这样可以极大减轻显存压力, 根本不需要把层放到 CPU 上.
+
+---
+
+#### 优化点 4: 解决开机看门狗超时(`watchdog timed out`)
+
+* 现状与痛点:
+
+  * 日志中出现了: `runner.go:584 msg="llama-server GPU discovery watchdog timed out" ... error="context deadline exceeded"`.
+
+  * 这是因为系统在通过子进程做并发探测时, 3 秒超时时间被卡死了(PCIe 通信或大内存分配阻塞).
+
+* 调优策略:
+
+  * 虽然系统最后优雅降级使用了旧探测值, 但建议显式调大加载容忍度:
+
+```bash
+OLLAMA_LOAD_TIMEOUT=15m
+```
+
+    同时避免多余的后端扫描(移除 Vulkan), 能显著改善此问题.
+
+---
+
+#### 优化点 5: 关于多模态图像分辨率的微调(进阶建议)
+
+* 日志中有一句显眼的提示:
+  > `srv load_model: cap image_max_tokens (original=1120) to n_ubatch (512) because model needs non-causal attention on image`
+  > `srv load_model: increase n_ubatch (-ub) to increase vision token budget`
+
+* 建议: Gemma 4 自带的视觉多模态图像分块原本支持 1120 个 Token, 但由于当前 `n_ubatch` 锁在 512, 图像分辨率细节被强行裁减了一半. 如果在后续业务中需要处理高清图片, 建议在自定义 Modelfile 中增加 `PARAMETER num_ubatch 1120` 或更高以解锁满血画质理解.
+
+---
+
+### 三、终极优化后的生产启动命令推荐
+
+结合上述分析, 为您量身定制的终极优化启动脚本如下:
+
+```bash
+CUDA_VISIBLE_DEVICES="0,2" \
+OLLAMA_FLASH_ATTENTION=1 \
+OLLAMA_KV_CACHE_TYPE=q8_0 \
+OLLAMA_CONTEXT_LENGTH=65536 \
+OLLAMA_NUM_PARALLEL=2 \
+OLLAMA_SCHED_SPREAD=1 \
+OLLAMA_GPU_OVERHEAD=1073741824 \
+LLAMA_ARG_FIT=on \
+LLAMA_ARG_FIT_TARGET=256 \
+OLLAMA_MAX_LOADED_MODELS=1 \
+OLLAMA_LOAD_TIMEOUT=15m \
+OLLAMA_NO_CLOUD=1 \
+OLLAMA_HOST=http://0.0.0.0:11434 \
+OLLAMA_VULKAN=0 \
+OLLAMA_DEBUG=1 \
+OLLAMA_DEBUG_LOG_REQUESTS=0 \
+./ollama serve
+
+```
+
+### 预期优化收益:
+
+1. 彻底消除 CPU 卸载(Offload): 凭借 `OLLAMA_KV_CACHE_TYPE=q8_0` 与合理的 Context 设置, Gemma 4 31B 的 61 层网络将 100% 进驻双 A40 显卡.
+
+2. 生成速度翻倍提升: 单字生成速度预计将从目前的 `7.74 tokens/s` 飙升至 `20 ~ 30+ tokens/s`, 直接消除原本 6 分多钟的长等待, 端到端耗时大幅减半!
+
 -------------------------------------------------------------------------------------------------------------------
+
+我使用以下参数启动 ollama, 确认整个模型都跑在了 GPU 上, 如下所示:
+```bash
+$ CUDA_VISIBLE_DEVICES="0,2" \
+OLLAMA_FLASH_ATTENTION=1 \
+OLLAMA_KV_CACHE_TYPE=q8_0 \
+OLLAMA_CONTEXT_LENGTH=65536 \
+OLLAMA_NUM_PARALLEL=2 \
+OLLAMA_SCHED_SPREAD=1 \
+OLLAMA_GPU_OVERHEAD=1073741824 \
+LLAMA_ARG_FIT=on \
+LLAMA_ARG_FIT_TARGET=256 \
+OLLAMA_MAX_LOADED_MODELS=1 \
+OLLAMA_LOAD_TIMEOUT=15m \
+OLLAMA_NO_CLOUD=1 \
+OLLAMA_HOST=http://0.0.0.0:11434 \
+OLLAMA_VULKAN=0 \
+OLLAMA_DEBUG=1 \
+OLLAMA_DEBUG_LOG_REQUESTS=0 \
+./ollama serve
+
+$ ./ollama ps
+NAME          ID              SIZE      PROCESSOR    CONTEXT    RUNNER      UNTIL
+gemma4:31b    17ba34c06c80    7.1 GB    100% GPU     65536      llamacpp    4 minutes from now
+$
+$ ./ollama show gemma4:31b --parameters
+temperature                    1
+top_k                          64
+top_p                          0.95
+draft_num_predict              3
+$
+
+```
+通过查看 nvidia-smi 的输出, 发现两种显卡要么只有一张卡的利用率是 100%, 要么两张卡的利用率都只有一半, 如下所示:
+```bash
+Tue Oct 20 10:48:00 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.163.01             Driver Version: 550.163.01     CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A40                     Off |   00000000:67:00.0 Off |                    0 |
+|  0%   76C    P0            160W /  300W |   18321MiB /  46068MiB |    100%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A40                     Off |   00000000:68:00.0 Off |                    0 |
+|  0%   48C    P0             77W /  300W |   41187MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA A40                     Off |   00000000:6A:00.0 Off |                    0 |
+|  0%   71C    P0            210W /  300W |   18777MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
+
+Tue Oct 20 10:49:48 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.163.01             Driver Version: 550.163.01     CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A40                     Off |   00000000:67:00.0 Off |                    0 |
+|  0%   67C    P0            152W /  300W |   18321MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A40                     Off |   00000000:68:00.0 Off |                    0 |
+|  0%   46C    P0             76W /  300W |   41187MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA A40                     Off |   00000000:6A:00.0 Off |                    0 |
+|  0%   76C    P0            223W /  300W |   18777MiB /  46068MiB |    100%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
+Tue Oct 20 10:48:48 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.163.01             Driver Version: 550.163.01     CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A40                     Off |   00000000:67:00.0 Off |                    0 |
+|  0%   63C    P0            185W /  300W |   18321MiB /  46068MiB |     48%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A40                     Off |   00000000:68:00.0 Off |                    0 |
+|  0%   42C    P0             75W /  300W |   41187MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA A40                     Off |   00000000:6A:00.0 Off |                    0 |
+|  0%   64C    P0            123W /  300W |   18777MiB /  46068MiB |     54%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
+```
+ollama 服务端日志如文件所示.
+我的客户端是 claude code, 请根据以上信息, 分析是否还可以提供显卡的利用率, 是否还能提高服务端输出 token 的速度?
+
+从这份最新的日志来看, 前一轮的优化取得了立竿见影的突破性战果:
+
+1. 彻底终结 CPU 拖累: `offloaded 61/61 layers to GPU`, 模型权重 100% 进驻显卡!
+2. 推理速度暴增近 5 倍:
+   * 提示词预处理(Prefill)速度: 从之前的 ~355 tokens/s 暴增至 `880 ~ 930 tokens/s`(提速近 3 倍);
+   * 解码吐字(Generation)速度: 从之前的 7.74 tokens/s 暴升至 `26.5 ~ 35.6 tokens/s`(提速 4~5 倍);
+   * 相同的长任务耗时直接从 6分57秒 压缩至 1分30秒 ~ 2分40秒!
+
+现在我们针对你提出的两个新核心问题, 从底层架构做最深入的透视与进一步榨干性能的调优.
+
+---
+
+### 一、为什么两张卡"要么一张 100% 一张 0%, 要么两张都只有 50%"?
+
+你在 `nvidia-smi` 中观察到的三种形态:
+* 状态 1: `GPU 0 (100%), GPU 2 (0%)`
+* 状态 2: `GPU 0 (0%), GPU 2 (100%)`
+* 状态 3: `GPU 0 (48%), GPU 2 (54%)`
+
+这绝不是硬件故障或驱动 Bug, 而是大模型底层多卡"流水线并行(Pipeline Parallelism)"在物理上的必然现象!
+
+#### 1. 底层原理: 流水线并行(PP)的"交替接力"机制
+
+看日志中底层 `llama.cpp` 的这一行声明:
+> `llama_context: pipeline parallelism enabled`
+> `CUDA0 model buffer size = 8617.04 MiB`(分配了第 0 ~ 29 层)
+> `CUDA1 model buffer size = 9173.07 MiB`(分配了第 30 ~ 60 层)
+
+因为你设置了 `OLLAMA_SCHED_SPREAD=1`, Ollama 把模型以层级串联切分成了两半:
+
+```bash
+[Token 输入]
+     │
+     ▼
+[GPU 0 运算第 0~29 层] ──▶ 此时 GPU 0 算力 100%! GPU 2 处于 0% 死等状态(气泡 Bubble)
+     │
+     ▼ (跨主板 PCIe 插槽传输中间张量激活值)
+[GPU 2 运算第 30~60 层] ──▶ 此时 GPU 2 算力 100%! GPU 0 处于 0% 空闲状态!
+     │
+     ▼
+[吐出下一个预测 Token] ──▶ 循环下一轮
+```
+
+* 当 `nvidia-smi` 刚好抓拍到 GPU 0 正在计算时: 你看到的就是 `100% / 0%`;
+* 当刚好抓拍到 GPU 2 正在计算时: 你看到的就是 `0% / 100%`;
+* 为什么有时显示双卡 50%?
+  `nvidia-smi` 默认是以 1 秒为窗口进行时间平均平滑统计的. 因为每秒钟吐出约 30 个 Token, 意味着 GPU 0 和 GPU 2 之间在一秒内交替接力了 30 次. 在一秒钟内, GPU 0 有一半时间在算, GPU 2 有一半时间在算, 平均下来在传感器眼里就呈现出双卡各自 48% ~ 54% 的假象.
+
+#### 2. 多模态 CLIP 编码器只绑定了单卡
+
+日志中明确记录: `clip_ctx: CLIP using CUDA0 backend`. 当客户端传入图片时, 只有 GPU 0 独自进行视觉特征提取, GPU 2 完全不参与, 进一步加剧了单卡 100% 的现象.
+
+---
+
+### 二、还能进一步提高输出速度吗? (四大重磅突破口)
+
+虽然目前已经达到 35 t/s, 但在分析了针对 `Claude Code` 客户端的完整交互特征后, 系统依然留存着巨大的潜力和暗伤.
+
+---
+
+#### 突破口 1: 降维打击 -- 回归"单卡独占", 干掉流水线气泡与 PCIe 延迟!
+
+这是很多工程师的认知盲区: 在这台机器上, 用两张卡跑反而可能比用单张卡更慢!
+
+我们来算一笔精确的显存物理账本:
+* 你的单张 NVIDIA A40 物理显存是 45 GiB(46,068 MiB);
+* 当前在双卡上的总显存占用汇总:
+  * 模型主体(31B Q4): ~17.4 GiB
+  * MTP 草稿模型(470M): ~0.47 GiB
+  * 视觉模块与计算缓冲区: ~3.8 GiB
+  * 65K 上下文在 `q8_0` 下的总 KV 缓存: ~8.0 GiB
+  * 全局总显存需求仅仅只有: ~29.7 GiB!
+* 结论: 一张 45GB 的 A40, 不仅能 100% 塞下整个模型和 65K 上下文, 甚至还富余整整 15GB 显存!
+
+##### 为什么双卡反而拖慢了?
+
+双卡工作时, 每生成一个 Token(或投机生成的每一步), GPU 0 都必须通过主板 PCIe 总线将隐藏状态发送给 GPU 2, GPU 2 算完又要同步回来. PCIe 通信延迟严重拖累了单 Token 生成速度.
+
+> 优化动作:
+> 把 `CUDA_VISIBLE_DEVICES="0,2"` 改为单卡 `CUDA_VISIBLE_DEVICES="0"`(或单独使用 `2`), 并关闭 `OLLAMA_SCHED_SPREAD=0`.
+> 预期收益: 消除了跨卡 PCIe 传输和流水线交替气泡, 显卡在计算时是真正的整卡 100% 全速运转, 解码速度预计将从目前的 26~35 t/s 直接冲上 `38 ~ 48+ tokens/s`!
+
+---
+
+#### 突破口 2: 解决 Claude Code 的"失忆截断"与 Prefill 耗时灾难
+
+在日志中, 隐藏着一个对写代码影响极大的严重问题:
+> `time=... msg="truncating input messages which exceed context length" truncated=12`
+> `time=... msg="truncating input messages which exceed context length" truncated=14`
+> `... truncated=22`
+
+##### 发生了什么?
+
+* Claude Code 是一个代码 Agent, 随着多轮重构、读文件、执行 Bash 命令, 它的对话历史极其庞大(每轮上下文都在 5.5 万 ~ 5.9 万 Token 徘徊).
+* 你的全局上限锁在 `65536`, 导致每一轮新对话, Ollama 都在暴力裁剪掉 Claude Code 前面的 12 ~ 22 条历史对话消息! Claude Code 会开始丢失前置规则、忘记上一步读过的源码文件.
+* 更灾难的连锁反应:
+  > `forcing full prompt re-processing due to lack of cache data ... erased invalidated context checkpoint`
+  由于每次都发生了前缀截断, 导致 llama.cpp 的 Prompt Cache(KV 缓存复用)全面失效!
+  结果就是: Claude Code 每一轮哪怕只问一句话, 服务端都要硬等约 60 秒(1 分钟)去重新计算这 5.5 万个 Token(Prompt Eval Time: 60s)!
+
+##### 解决方案:
+1. Claude Code 是个人本地命令行工具, 根本不需要开 2 个并发槽位! 将 `OLLAMA_NUM_PARALLEL=2` 改为 `OLLAMA_NUM_PARALLEL=1`.
+2. 槽位减半后, KV 缓存显存直接节省一半.
+3. 利用腾出的巨大显存, 把上下文安全拓宽至 `OLLAMA_CONTEXT_LENGTH=98304`(96K)或 `131072`(128K)!
+   * 收益 1: 彻底杜绝 `truncated` 截断, Claude Code 不再丢失上下文代码记忆;
+   * 收益 2: 没有截断, 系统就能够成功命中前序 Cache, 后续多轮对话的 Prefill 时间将从 60 秒骤降至几秒.
+
+---
+
+#### 突破口 3: 激进化 MTP 投机采样(Draft Num Predict)
+
+查看这一轮关于投机解码(Speculative Decoding)的统计:
+> `draft acceptance = 0.83398 ( 643 accepted / 771 generated), mean len = 3.50`
+> `acc per pos = (0.903, 0.833, 0.767)`
+
+* 分析: 这个 470M 的 Assistant 草稿模型命中率极其恐怖(第 1 位 90%、第 2 位 83%、第 3 位依然高达 76%!), 几乎只要猜就能中.
+* 但当前底层限制了草稿长度: `draft_num_predict = 3`(最多只让猜 3 个).
+* 调优: 可以放宽到 `4` 或 `5`. 让草稿模型一次性预测 4~5 个 Token. 只要命中, 主模型一次验证就能批量收割更多 Token, 输出流速会再上一个台阶.
+
+---
+
+### 三、极致调优方案实施建议
+
+根据你的实际硬件, 提供两个调控方向:
+
+#### 方案 A(强烈推荐): 单卡极致性能流(单卡 45GB 独占, 追求最快响应)
+
+把整个服务锁定在其中一张完全空闲的 A40 上(例如 2 号卡, 避开 0 号卡上可能存在的桌面渲染):
+
+```bash
+# 仅使用一张 A40 显卡, 消除跨卡 PCIe 延迟与交替休眠
+CUDA_VISIBLE_DEVICES="2" \
+OLLAMA_FLASH_ATTENTION=1 \
+OLLAMA_KV_CACHE_TYPE=q8_0 \
+OLLAMA_CONTEXT_LENGTH=98304 \
+OLLAMA_NUM_PARALLEL=1 \
+OLLAMA_SCHED_SPREAD=0 \
+OLLAMA_GPU_OVERHEAD=1073741824 \
+LLAMA_ARG_FIT=on \
+LLAMA_ARG_FIT_TARGET=256 \
+OLLAMA_MAX_LOADED_MODELS=1 \
+OLLAMA_LOAD_TIMEOUT=15m \
+OLLAMA_NO_CLOUD=1 \
+OLLAMA_HOST=http://0.0.0.0:11434 \
+OLLAMA_VULKAN=0 \
+OLLAMA_DEBUG=1 \
+OLLAMA_DEBUG_LOG_REQUESTS=0 \
+./ollama serve
+```
+
+* 效果:
+  * 该卡计算时利用率稳居 100%;
+  * 彻底干掉流水线 Bubble, 单字生成有望冲破 `40+ tokens/s`;
+  * 上下文放宽至 96K, 彻底消除 Claude Code 截断. 另一张 A40 还能完全空出来跑其他任务.
+
+---
+
+#### 方案 B: 双卡满血长文本流(追求 131K 乃至 262K 超巨大工程库重构)
+
+如果你确实经常要一次性把数十万行超大工程代码塞给 Claude Code:
+
+```bash
+CUDA_VISIBLE_DEVICES="0,2" \
+OLLAMA_FLASH_ATTENTION=1 \
+OLLAMA_KV_CACHE_TYPE=q8_0 \
+OLLAMA_CONTEXT_LENGTH=131072 \
+OLLAMA_NUM_PARALLEL=1 \
+OLLAMA_SCHED_SPREAD=1 \
+OLLAMA_GPU_OVERHEAD=1073741824 \
+LLAMA_ARG_FIT=on \
+LLAMA_ARG_FIT_TARGET=256 \
+OLLAMA_MAX_LOADED_MODELS=1 \
+OLLAMA_LOAD_TIMEOUT=15m \
+OLLAMA_NO_CLOUD=1 \
+OLLAMA_HOST=http://0.0.0.0:11434 \
+OLLAMA_VULKAN=0 \
+OLLAMA_DEBUG=1 \
+OLLAMA_DEBUG_LOG_REQUESTS=0 \
+./ollama serve
+```
+
+* 效果: 双卡各自吃满 128K 上下文无压力, 但生成速率会因流水线切分保持在 ~30 tokens/s 上下.
+
+---
+
+### 四、进阶配置: 提升 MTP 投机步数(可选)
+
+如果你想榨干投机采样的红利, 写一个微调 Modelfile:
+
+```dockerfile
+FROM gemma4:31b
+PARAMETER draft_num_predict 5
+```
+
+然后执行 `ollama create gemma4:31b-turbo -f ./Modelfile`, 让草稿步数从 3 步放宽至 5 步, 解码吞吐还能再迎来一波显著提升.
 
 -------------------------------------------------------------------------------------------------------------------
 
